@@ -1,0 +1,29 @@
+# Rust build output
+/target
+**/*.rs.bk
+
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Backup / temp files
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+
+# IDEs and editors
+.idea/
+.vscode/
+.cursor/
+*.code-workspace
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Cargo files that shouldn't be committed in libraries
+Cargo.lock

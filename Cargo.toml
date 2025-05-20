@@ -1,0 +1,30 @@
+[package]
+name = "windows-dpapi"
+version = "0.1.0"
+edition = "2021"
+authors = ["Sam Sheridan <sam@sheridan.uk>"]
+license = "MIT OR Apache-2.0"
+description = "Safe Rust wrapper around Windows DPAPI using machine scope encryption. Ideal for RMM agents and headless system tools."
+readme = "README.md"
+repository = "https://github.com/sheridans/windows-dpapi"
+homepage = "https://github.com/sheridans/windows-dpapi"
+documentation = "https://docs.rs/windows-dpapi"
+keywords = ["windows", "dpapi", "encryption", "ffi", "rmm"]
+categories = ["cryptography", "os::windows-apis", "api-bindings"]
+exclude = [".github", ".vscode", "target", ".idea"]
+
+[badges]
+docsrs = { status = "true" }
+github-actions = { repository = "sheridans/windows-dpapi", workflow = "CI" }
+
+[package.metadata.docs.rs]
+targets = ["x86_64-pc-windows-msvc"]
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+anyhow = "1"
+winapi = { version = "0.3", features = ["wincrypt", "dpapi", "minwindef", "winbase"] }
+log = "0.4"
+
+[dev-dependencies]
+pretty_assertions = "1.4"
