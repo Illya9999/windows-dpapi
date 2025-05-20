@@ -43,13 +43,13 @@
 #[cfg(windows)]
 use anyhow::{Context, Result};
 #[cfg(windows)]
+use std::{ptr, slice};
+#[cfg(windows)]
 use winapi::shared::minwindef::DWORD;
 #[cfg(windows)]
 use winapi::um::dpapi::{CryptProtectData, CryptUnprotectData};
 #[cfg(windows)]
 use winapi::um::wincrypt::DATA_BLOB;
-#[cfg(windows)]
-use std::{ptr, slice};
 
 /// Defines the encryption scope: user or machine
 #[cfg(windows)]
@@ -57,9 +57,9 @@ use std::{ptr, slice};
 pub enum Scope {
     /// Tied to current user account. Data can only be decrypted by the same user
     /// on the same machine. This is the most secure option for user-specific data.
-    /// 
+    ///
     /// # Security
-    /// 
+    ///
     /// - Data is encrypted using the current user's credentials
     /// - Only the same user on the same machine can decrypt the data
     /// - If the user's password changes, the data can still be decrypted
@@ -68,11 +68,11 @@ pub enum Scope {
     ///   Scope::User by the same user. The scope flag is used during encryption
     ///   to determine which key to use.
     User,
-    
+
     /// Tied to local machine. Data can be decrypted by any user on the same machine.
-    /// 
+    ///
     /// # Security
-    /// 
+    ///
     /// - Data is encrypted using the machine's credentials
     /// - Any user on the same machine can decrypt the data
     /// - Useful for shared secrets that need to be accessible to all users
@@ -125,13 +125,16 @@ pub fn encrypt_data(data: &[u8], scope: Scope) -> Result<Vec<u8>> {
     log::debug!("Encrypting with DPAPI ({:?} scope)", scope);
 
     let flags = match scope {
-        Scope::User => 0,              // default = user + UI prompt (but no entropy = silent)
-        Scope::Machine => 0x4,         // CRYPTPROTECT_LOCAL_MACHINE
+        Scope::User => 0,      // default = user + UI prompt (but no entropy = silent)
+        Scope::Machine => 0x4, // CRYPTPROTECT_LOCAL_MACHINE
     };
 
     unsafe {
         let mut input = to_blob(data);
-        let mut output = DATA_BLOB { cbData: 0, pbData: ptr::null_mut() };
+        let mut output = DATA_BLOB {
+            cbData: 0,
+            pbData: ptr::null_mut(),
+        };
 
         let success = CryptProtectData(
             &mut input,
@@ -144,8 +147,7 @@ pub fn encrypt_data(data: &[u8], scope: Scope) -> Result<Vec<u8>> {
         );
 
         if success == 0 {
-            return Err(std::io::Error::last_os_error())
-                .context("CryptProtectData failed");
+            return Err(std::io::Error::last_os_error()).context("CryptProtectData failed");
         }
 
         let encrypted = slice::from_raw_parts(output.pbData, output.cbData as usize).to_vec();
@@ -201,7 +203,10 @@ pub fn decrypt_data(data: &[u8], scope: Scope) -> Result<Vec<u8>> {
 
     unsafe {
         let mut input = to_blob(data);
-        let mut output = DATA_BLOB { cbData: 0, pbData: ptr::null_mut() };
+        let mut output = DATA_BLOB {
+            cbData: 0,
+            pbData: ptr::null_mut(),
+        };
 
         let success = CryptUnprotectData(
             &mut input,
@@ -214,8 +219,7 @@ pub fn decrypt_data(data: &[u8], scope: Scope) -> Result<Vec<u8>> {
         );
 
         if success == 0 {
-            return Err(std::io::Error::last_os_error())
-                .context("CryptUnprotectData failed");
+            return Err(std::io::Error::last_os_error()).context("CryptUnprotectData failed");
         }
 
         let decrypted = slice::from_raw_parts(output.pbData, output.cbData as usize).to_vec();
@@ -243,7 +247,8 @@ mod tests {
         let original = b"machine secret";
         let encrypted = encrypt_data(original, Scope::Machine).expect("Machine encryption failed");
         assert_ne!(original.to_vec(), encrypted);
-        let decrypted = decrypt_data(&encrypted, Scope::Machine).expect("Machine decryption failed");
+        let decrypted =
+            decrypt_data(&encrypted, Scope::Machine).expect("Machine decryption failed");
         assert_eq!(original.to_vec(), decrypted);
     }
 
