@@ -150,7 +150,11 @@ pub fn encrypt_data(data: &[u8], scope: Scope, entropy: Option<&[u8]>) -> Result
         let success = CryptProtectData(
             &mut input,
             ptr::null(),
-            if entropy.is_some() { &mut entropy_blob } else { ptr::null_mut() },
+            if entropy.is_some() {
+                &mut entropy_blob
+            } else {
+                ptr::null_mut()
+            },
             ptr::null_mut(),
             ptr::null_mut(),
             flags,
@@ -232,7 +236,11 @@ pub fn decrypt_data(data: &[u8], scope: Scope, entropy: Option<&[u8]>) -> Result
         let success = CryptUnprotectData(
             &mut input,
             ptr::null_mut(),
-            if entropy.is_some() { &mut entropy_blob } else { ptr::null_mut() },
+            if entropy.is_some() {
+                &mut entropy_blob
+            } else {
+                ptr::null_mut()
+            },
             ptr::null_mut(),
             ptr::null_mut(),
             flags,
@@ -259,7 +267,8 @@ mod tests {
         let original = b"user secret";
         let encrypted = encrypt_data(original, Scope::User, None).expect("User encryption failed");
         assert_ne!(original.to_vec(), encrypted);
-        let decrypted = decrypt_data(&encrypted, Scope::User, None).expect("User decryption failed");
+        let decrypted =
+            decrypt_data(&encrypted, Scope::User, None).expect("User decryption failed");
         assert_eq!(original.to_vec(), decrypted);
     }
 
@@ -267,18 +276,22 @@ mod tests {
     fn round_trip_user_scope_entropy() {
         let original = b"user secret";
         let entropy = b"user entropy";
-        let encrypted = encrypt_data(original, Scope::User, Some(entropy)).expect("User encryption failed");
+        let encrypted =
+            encrypt_data(original, Scope::User, Some(entropy)).expect("User encryption failed");
         assert_ne!(original.to_vec(), encrypted);
-        let decrypted = decrypt_data(&encrypted, Scope::User, Some(entropy)).expect("User decryption failed");
+        let decrypted =
+            decrypt_data(&encrypted, Scope::User, Some(entropy)).expect("User decryption failed");
         assert_eq!(original.to_vec(), decrypted);
     }
 
     #[test]
     fn round_trip_machine_scope() {
         let original = b"machine secret";
-        let encrypted = encrypt_data(original, Scope::Machine, None).expect("Machine encryption failed");
+        let encrypted =
+            encrypt_data(original, Scope::Machine, None).expect("Machine encryption failed");
         assert_ne!(original.to_vec(), encrypted);
-        let decrypted = decrypt_data(&encrypted, Scope::Machine, None).expect("Machine decryption failed");
+        let decrypted =
+            decrypt_data(&encrypted, Scope::Machine, None).expect("Machine decryption failed");
         assert_eq!(original.to_vec(), decrypted);
     }
 
@@ -286,9 +299,11 @@ mod tests {
     fn round_trip_machine_scope_entropy() {
         let original = b"machine secret";
         let entropy = b"user entropy";
-        let encrypted = encrypt_data(original, Scope::Machine, Some(entropy)).expect("Machine encryption failed");
+        let encrypted = encrypt_data(original, Scope::Machine, Some(entropy))
+            .expect("Machine encryption failed");
         assert_ne!(original.to_vec(), encrypted);
-        let decrypted = decrypt_data(&encrypted, Scope::Machine, Some(entropy)).expect("Machine decryption failed");
+        let decrypted = decrypt_data(&encrypted, Scope::Machine, Some(entropy))
+            .expect("Machine decryption failed");
         assert_eq!(original.to_vec(), decrypted);
     }
 
@@ -305,7 +320,8 @@ mod tests {
         let data = b"";
         let entropy = b"random entropy";
         let encrypted = encrypt_data(data, Scope::Machine, Some(entropy)).expect("Encrypt empty");
-        let decrypted = decrypt_data(&encrypted, Scope::Machine, Some(entropy)).expect("Decrypt empty");
+        let decrypted =
+            decrypt_data(&encrypted, Scope::Machine, Some(entropy)).expect("Decrypt empty");
         assert_eq!(data.to_vec(), decrypted);
     }
 
@@ -314,7 +330,8 @@ mod tests {
         let data = b"random value";
         let entropy = b"";
         let encrypted = encrypt_data(data, Scope::Machine, Some(entropy)).expect("Encrypt empty");
-        let decrypted = decrypt_data(&encrypted, Scope::Machine, Some(entropy)).expect("Decrypt empty");
+        let decrypted =
+            decrypt_data(&encrypted, Scope::Machine, Some(entropy)).expect("Decrypt empty");
         assert_eq!(data.to_vec(), decrypted);
     }
 
@@ -331,7 +348,8 @@ mod tests {
         let data = vec![0xAAu8; 5 * 1024 * 1024];
         let entropy = b"random entropy";
         let encrypted = encrypt_data(&data, Scope::Machine, Some(entropy)).expect("Encrypt large");
-        let decrypted = decrypt_data(&encrypted, Scope::Machine, Some(entropy)).expect("Decrypt large");
+        let decrypted =
+            decrypt_data(&encrypted, Scope::Machine, Some(entropy)).expect("Decrypt large");
         assert_eq!(data, decrypted);
     }
 
@@ -340,7 +358,8 @@ mod tests {
         let data = b"Random input";
         let entropy = &vec![0xAAu8; 5 * 1024 * 1024];
         let encrypted = encrypt_data(data, Scope::Machine, Some(entropy)).expect("Encrypt large");
-        let decrypted = decrypt_data(&encrypted, Scope::Machine, Some(entropy)).expect("Decrypt large");
+        let decrypted =
+            decrypt_data(&encrypted, Scope::Machine, Some(entropy)).expect("Decrypt large");
         assert_eq!(data.to_vec(), decrypted);
     }
 
@@ -356,7 +375,8 @@ mod tests {
     fn fails_on_corrupted_data_entropy() {
         let original = b"important";
         let entropy = b"entropy";
-        let mut encrypted = encrypt_data(original, Scope::Machine, Some(entropy)).expect("Encrypt failed");
+        let mut encrypted =
+            encrypt_data(original, Scope::Machine, Some(entropy)).expect("Encrypt failed");
         encrypted[0] ^= 0xFF;
         let result = decrypt_data(&encrypted, Scope::Machine, Some(entropy));
         assert!(result.is_err(), "Corrupted data should fail");
@@ -367,7 +387,8 @@ mod tests {
         let original = b"user secret";
         let entropy = b"user entropy";
         let bad_entropy = b"bad entropy";
-        let encrypted = encrypt_data(original, Scope::User, Some(entropy)).expect("User encryption failed");
+        let encrypted =
+            encrypt_data(original, Scope::User, Some(entropy)).expect("User encryption failed");
         assert_ne!(original.to_vec(), encrypted);
         let result = decrypt_data(&encrypted, Scope::User, Some(bad_entropy));
         assert!(result.is_err(), "Wrong entropy should fail");
@@ -378,9 +399,11 @@ mod tests {
         let original = b"user secret";
         let entropy = b"user entropy";
         let bad_entropy = b"bad entropy";
-        let encrypted = encrypt_data(original, Scope::User, Some(entropy)).expect("User encryption failed");
+        let encrypted =
+            encrypt_data(original, Scope::User, Some(entropy)).expect("User encryption failed");
         assert_ne!(original.to_vec(), encrypted);
-        let other_encrypted = encrypt_data(original, Scope::User, Some(bad_entropy)).expect("User encryption failed");
+        let other_encrypted =
+            encrypt_data(original, Scope::User, Some(bad_entropy)).expect("User encryption failed");
         assert_ne!(encrypted, other_encrypted);
     }
 }
